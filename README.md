@@ -13,7 +13,7 @@ nxcstorm grew out of two tools I relied on for OSCP credential spraying, each wi
       <img width="852" height="211" alt="image" src="https://github.com/user-attachments/assets/099d6826-4ff9-4354-9686-eccbf5e384eb" />
 
 4. **Optional arguments** - users can toggle `--local-auth`, which auto-applies on smb|winrm|rdp|mssql only, and/or `--continue-on-success`.
-5. **Improved checks prior to nxc call** - Extends nxc-sweep port check idea to work across a full target list, checking protocol's port across every host concurrently via `xargs -P` instead of sequentially via `nc`. So, checks stay fast even as your target list grows.
+5. **Improved checks prior to nxc call** - Extends nxc-sweep port check idea to work across a full target list, checking protocol's port across every host concurrently via `xargs -P` instead of sequentially. So, checks stay fast even as your target list grows.
 
 ## Installation
 Clone this repo or download the script directly.
