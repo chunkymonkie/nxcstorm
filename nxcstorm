@@ -1,0 +1,216 @@
+#!/bin/bash
+
+# --- Colors ---
+BLUE=$'\033[38;5;117m'
+YELLOW=$'\033[38;5;226m'
+GREEN=$'\033[0;32m'
+GREY=$'\033[38;5;244m'
+
+NC=$'\033[0m'
+
+
+
+# --- Help Menu ---
+
+usage() {
+    echo -e "${YELLOW}[-] Usage: nxcstorm <protocols|all> <targets> -u <username> -p <password> [--local-auth] [--continue-on-success]${NC}"
+
+    exit 1
+}
+
+print_help() {
+    cat <<EOF
+
+${YELLOW}[-] Usage: nxcstorm <protocols|all> <targets> -u <username> -p <password> [--local-auth] [--continue-on-success]${NC}
+
+Note: each protocol sprays with sensible built-in defaults automatically (e.g. --shares for smb, --ls for ftp) - no flags to configure per protocol.
+
+Toggles:
+  --local-auth	            	Authenticate against local accounts instead of domain accounts. Only applied where valid (smb, winrm, rdp, mssql) - skipped elsewhere.
+  --continue-on-success	    	Keep testing remaining credentials/hosts after a successful login.
+EOF
+    exit 0
+}
+
+
+for arg in "$@"; do
+    if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
+        print_help
+    fi
+done
+
+
+
+XARGS_AVAILABLE=false
+MAX_JOBS=20
+if command -v xargs >/dev/null 2>&1; then
+    XARGS_AVAILABLE=true
+    if command -v nproc >/dev/null 2>&1; then
+        MAX_JOBS=$(nproc)
+    fi
+fi
+
+
+# per-protocol default flags as per nxc-sweep style, applied automatically, not user-facing 
+apply_protocol_defaults() {
+    local proto="$1"
+    case "$proto" in
+        smb)   SAFE_FLAGS+=(--shares) ;;
+        ftp)   SAFE_FLAGS+=(--ls) ;;
+        mssql) SAFE_FLAGS+=(-q "SELECT name FROM master.sys.databases;") ;;
+        # add more here as needed, e.g.:
+        # winrm) SAFE_FLAGS+=(...) ;;
+    esac
+}
+
+
+
+
+
+
+
+build_safe_flags() {
+    local proto="$1"
+    SAFE_FLAGS=()
+    apply_protocol_defaults "$proto"
+
+    # --local-auth is user-toggled, but only applied for protocols where it's valid, hence excludes ftp, ldap, ssh
+    if [ "$USE_LOCAL_AUTH" = true ]; then
+        case "$proto" in
+            smb|winrm|rdp|mssql)
+                SAFE_FLAGS+=(--local-auth)
+                echo -e "${BLUE}[!] Applying '--local-auth' for $proto${NC}"
+                ;;
+        esac
+    fi
+
+    if [ "$USE_CONTINUE" = true ]; then
+        SAFE_FLAGS+=(--continue-on-success)
+    fi
+}
+
+find_live_hosts() {
+    local port="$1"; shift
+    local hosts=("$@")
+    local live_hosts=()
+
+    if [ "$XARGS_AVAILABLE" = true ] && [ "${#hosts[@]}" -gt 1 ]; then
+        mapfile -t live_hosts < <(
+            printf '%s\n' "${hosts[@]}" |
+            xargs -P "$MAX_JOBS" -I{} bash -c 'nc -z -w 1 "$1" "$2" 2>/dev/null && printf "%s\n" "$1"' _ {} "$port"
+        )
+    else
+        for host in "${hosts[@]}"; do
+            if nc -z -w 1 "$host" "$port" 2>/dev/null; then
+                live_hosts+=("$host")
+            fi
+        done
+    fi
+    
+    if [ "${#live_hosts[@]}" -gt 0 ]; then
+        printf '%s\n' "${live_hosts[@]}"
+    fi
+}
+
+
+
+
+
+
+
+# ---- Argument Validation ----
+if [ "$#" -lt 4 ]; then
+    usage
+fi
+
+PROTOS_RAW="$1"
+TARGETS_RAW="$2"
+shift 2
+
+USER=""
+PASS=""
+USE_LOCAL_AUTH=false
+USE_CONTINUE=false
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -u) USER="$2"; shift 2 ;;
+        -p) PASS="$2"; shift 2 ;;
+        --local-auth) USE_LOCAL_AUTH=true; shift ;;
+        --continue-on-success) USE_CONTINUE=true; shift ;;
+        *)
+            echo -e "${YELLOW}[-] Unrecognized flag: $1${NC}"
+            usage
+            ;;
+    esac
+done
+
+if [ -z "$USER" ] || [ -z "$PASS" ]; then
+    echo -e "${YELLOW}[-] Missing required flags: -u <username> -p <password>${NC}"
+    usage
+fi
+
+
+
+
+
+
+# ---- Protocol Handling ----
+if [ "$PROTOS_RAW" = "all" ]; then
+    PROTO_ARRAY=(smb ldap winrm rdp mssql ssh ftp)
+else
+    IFS=',' read -ra PROTO_ARRAY <<< "$PROTOS_RAW"
+fi
+
+declare -A PROTO_PORTS=(
+    [smb]=445 [ldap]=389 [winrm]=5985 [rdp]=3389
+    [mssql]=1433 [ssh]=22 [ftp]=21
+)
+
+
+
+
+
+
+
+# ---- Resolve targets ----
+if [ -f "$TARGETS_RAW" ]; then
+    mapfile -t HOST_LIST < <(grep -Ev '^\s*(#|$)' "$TARGETS_RAW")
+else
+    HOST_LIST=("$TARGETS_RAW")
+fi
+
+TMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TMP_DIR"' EXIT
+TARGET_FILE="$TMP_DIR/targets.txt"
+
+# ---- Spray Loop ----
+for PROTO in "${PROTO_ARRAY[@]}"; do
+    PORT="${PROTO_PORTS[$PROTO]}"
+
+    if [ -z "$PORT" ]; then
+        LIVE_HOSTS=("${HOST_LIST[@]}")
+    else
+        mapfile -t LIVE_HOSTS < <(find_live_hosts "$PORT" "${HOST_LIST[@]}")
+    fi
+
+    if [ "${#LIVE_HOSTS[@]}" -eq 0 ]; then
+        echo -e "${GREY}[-] No live hosts for $PROTO on port $PORT. ${GREEN}Skipping.${NC}"
+        echo ""
+        continue
+    fi
+
+    # Build per-protocol flag list: baked-in defaults + user-toggled flags
+    build_safe_flags "$PROTO"
+
+    echo -e "[+] Spraying protocol: ${PROTO} (${#LIVE_HOSTS[@]} live host(s))"
+
+    if [ "${#LIVE_HOSTS[@]}" -eq 1 ]; then
+        nxc "$PROTO" "${LIVE_HOSTS[0]}" -u "$USER" -p "$PASS" "${SAFE_FLAGS[@]}"
+    else
+        printf "%s\n" "${LIVE_HOSTS[@]}" > "$TARGET_FILE"
+        nxc "$PROTO" "$TARGET_FILE" -u "$USER" -p "$PASS" "${SAFE_FLAGS[@]}"
+    fi
+
+    echo ""
+done
