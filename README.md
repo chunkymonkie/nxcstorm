@@ -21,7 +21,7 @@ Add the script to /usr/local/bin/ to execute it from anywhere on your machine, o
 sudo mv ~/Downloads/nxcstorm /usr/local/bin
 chmod +x /usr/local/bin/nxcstorm
 ```
-s
+
 ## Usage
 ```
 └─$ nxcstorm -h                 
@@ -41,15 +41,18 @@ nxcstorm all targets.txt -u usernames -p 'EricLikesRunning800' --continue-on-suc
 ```
 <img width="1280" height="519" alt="image" src="https://github.com/user-attachments/assets/60b7f2c5-032e-4e24-97d4-4e4351ec561e" />
 
+
 ```
 nxcstorm smb,rdp,ssh 192.168.1.150 -u usernames -p 'SamSuperSwimmer' --local-auth
 ```
 <img width="1280" height="275" alt="image" src="https://github.com/user-attachments/assets/871a05e0-3d57-4c35-bbef-d6b99f31a254" />
 
+
 ```
 nxcstorm rdp targets.txt -u usernames -p 'SamSuperSwimmer800' --continue-on-success
 ```
 <img width="1246" height="151" alt="image" src="https://github.com/user-attachments/assets/64f00263-72e9-461e-9323-faad568553f7" />
+
 
 ```
 nxcstorm ssh targets.txt -u demouser -p 'iliketodemonstrate'
