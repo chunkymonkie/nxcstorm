@@ -46,6 +46,12 @@ nxcstorm all targets.txt -u usernames -p 'EricLikesRunning800' --continue-on-suc
 
 
 ```
+nxcstorm all 10.129.34.196 -u 'mgtsvc$' -H 07d0303e41518a6ffcc323f5b3744cb3
+```
+<img width="1350" height="568" alt="image" src="https://github.com/user-attachments/assets/862b3def-defb-415b-8a5a-1a8db53b0e77" />
+
+
+```
 nxcstorm smb,rdp,ssh 192.168.1.150 -u usernames -p 'SamSuperSwimmer' --local-auth
 ```
 <img width="1280" height="275" alt="image" src="https://github.com/user-attachments/assets/871a05e0-3d57-4c35-bbef-d6b99f31a254" />
