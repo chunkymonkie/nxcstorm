@@ -28,13 +28,17 @@ chmod +x /usr/local/bin/nxcstorm
 ## Usage
 ```
 └─$ nxcstorm -h                 
-[-] Usage: nxcstorm <protocols|all> <targets> -u <username> -p <password> [--local-auth] [--continue-on-success]
+[-] Usage: nxcstorm <protocols|all> <targets> -u <username> (-p <password> | -H <LMHASH:NTHASH>) [--local-auth] [--continue-on-success]
 
 Note: each protocol sprays with sensible built-in defaults automatically (e.g. --shares for smb, --ls for ftp) - no flags to configure per protocol.
 
+Auth (choose one):
+  -p <password>                 Plaintext password.
+  -H <NTHASH>                   NTLM hash.
+
 Toggles:
-  --local-auth	            	Authenticate against local accounts instead of domain accounts. Only applied to smb, winrm, rdp, mssql.
-  --continue-on-success	    	Keep testing remaining credentials/hosts after a successful login.
+  --local-auth                  Authenticate against local accounts instead of domain accounts. Only applied where valid (smb, winrm, rdp, mssql) - skipped elsewhere.
+  --continue-on-success         Keep testing remaining credentials/hosts after a successful login.
 ```
 
 ### Example Usage
