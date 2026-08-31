@@ -28,7 +28,7 @@ chmod +x /usr/local/bin/nxcstorm
 ## Usage
 ```
 └─$ nxcstorm -h                 
-[-] Usage: nxcstorm <protocols|all> <targets> -u <username> (-p <password> | -H <LMHASH:NTHASH>) [--local-auth] [--continue-on-success]
+[-] Usage: nxcstorm <protocols|all> <targets> -u <username> (-p <password> | -H <NTHASH>) [--local-auth] [--continue-on-success]
 
 Note: each protocol sprays with sensible built-in defaults automatically (e.g. --shares for smb, --ls for ftp) - no flags to configure per protocol.
 
