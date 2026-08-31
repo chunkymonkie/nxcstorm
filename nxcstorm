@@ -21,7 +21,7 @@ usage() {
 print_help() {
     cat <<EOF
 
-${YELLOW}[-] Usage: nxcstorm <protocols|all> <targets> -u <username> (-p <password> | -H <LMHASH:NTHASH>) [--local-auth] [--continue-on-success]${NC}
+${YELLOW}[-] Usage: nxcstorm <protocols|all> <targets> -u <username> (-p <password> | -H <NTHASH>) [--local-auth] [--continue-on-success]${NC}
 
 Note: each protocol sprays with sensible built-in defaults automatically (e.g. --shares for smb, --ls for ftp) - no flags to configure per protocol.
 
