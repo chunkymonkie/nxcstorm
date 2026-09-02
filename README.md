@@ -10,11 +10,12 @@ nxcstorm grew out of two tools I relied on for OSCP credential spraying, each wi
 1. **Multi-target support** - single target or list of targets
 2. **Protocol Flexibility** - select one, multiple, or all protocols to spray credentials against.
 3. **Usernames and Passwords** - single username and/or password OR list of usernames and/or passwords
-4. **Default arguments per protocol (nxc-sweep style)** - e.g. `--shares` for smb, `--ls` for ftp, a default query for mssql. Modify script easily as per your requirement.
+4. **NTLM Authentication** - single NT hash instead of a plaintext password
+5. **Default arguments per protocol (nxc-sweep style)** - e.g. `--shares` for smb, `--ls` for ftp, a default query for mssql. Modify script easily as per your requirement.
       <img width="852" height="211" alt="image" src="https://github.com/user-attachments/assets/099d6826-4ff9-4354-9686-eccbf5e384eb" />
 
-5. **Optional arguments** - users can toggle `--local-auth`, which auto-applies on smb|winrm|rdp|mssql only, and/or `--continue-on-success`.
-6. **Improved checks prior to nxc call** - Extends nxc-sweep port check idea to work across a full target list, checking protocol's port across every host concurrently via `xargs -P` instead of sequentially. So, checks stay fast even as your target list grows.
+6. **Optional arguments** - users can toggle `--local-auth`, which auto-applies on smb|winrm|rdp|mssql only, and/or `--continue-on-success`.
+7. **Improved checks prior to nxc call** - Extends nxc-sweep port check idea to work across a full target list, checking protocol's port across every host concurrently via `xargs -P` instead of sequentially. So, checks stay fast even as your target list grows.
 
 ## Installation
 Clone this repo or download the script directly.
